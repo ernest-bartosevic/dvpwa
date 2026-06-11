@@ -1,0 +1,27 @@
+name: Semgrep
+
+on:
+  pull_request: {}
+
+# Cancel in-progress scans for the same PR when new commits are pushed
+concurrency:
+  group: semgrep-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  semgrep:
+    name: Semgrep Scan
+    runs-on: ubuntu-latest
+    # Skip Dependabot PRs — it can't access secrets, so the scan would always fail
+    if: github.actor != 'dependabot[bot]'
+    container:
+      image: semgrep/semgrep
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Semgrep
+        run: semgrep ci --config auto
+        env:
+          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
